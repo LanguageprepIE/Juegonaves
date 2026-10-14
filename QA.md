@@ -24,3 +24,5 @@ The four worlds use a shared platform layout and compact original pixel drawings
 ## Staff boss update
 
 Regression harness passes all four boss question sequences, incorrect-answer detention, physical traversal of detention, return to the boss, preservation of Merits and clues, MB ball firing, expanded platform routes and boss-answer report evidence. `node --check` passes for both game scripts. Browser fixtures separately exercise the real staff-checkpoint UI; they do not constitute a full manual adventure playthrough.
+
+Browser verification of the update: all four real boss UIs tested with three correct answers and pass-granted confirmation using the isolated fixture page. A wrong answer produced its Spanish explanation and opened the detention route; movement and jumping in detention were exercised. Full physical escape and progress preservation pass in the logic harness. The live downloaded report PDF was parsed independently (two pages) and contains all tested boss answers and the detention count. The normal student URL loads the new start instructions and contains no fixture controls or school logo.

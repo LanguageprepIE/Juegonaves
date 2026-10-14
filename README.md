@@ -48,9 +48,9 @@ Run `node --check game.js` and `node tests/logic.cjs`. The tests exercise moveme
 
 Static files run without build tooling. Serve the repository root for a local preview or enable GitHub Pages from `main`, `/ (root)`. Browser interactions and outstanding verification limitations are documented in `QA.md`.
 
-## Repository rename
+## Repository
 
-The connected GitHub tools do not provide a repository rename operation. In GitHub: open this repository → Settings → General → Repository name → type `School-Escape` → Rename. Check Settings → Pages afterwards and use the URL displayed there. The game uses relative asset URLs, so no source changes are required after renaming. Do not assume the previous Pages URL redirects.
+The existing repository has been renamed to `LanguageprepIE/School-Escape`. GitHub Pages uses https://languageprepie.github.io/School-Escape/. No replacement repository was created.
 
 ## Licence
 
