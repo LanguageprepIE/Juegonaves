@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Misión Compras: Space Shopper</title>
+<style>
+  :root {
+    --bg-color: #080c14;
+    --accent: #00f0ff;
+    --success: #39ff14;
+    --danger: #ff0055;
+    --warning: #ffb703;
+    --card-bg: rgba(255, 255, 255, 0.06);
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: #fff;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* PANTALLAS */
+  .screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 820px;
+    max-width: 95vw;
+  }
+  .active { display: flex; }
+
+  h1 { margin: 0 0 8px 0; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+  p.subtitle { margin: 0 0 20px 0; color: #94a3b8; font-size: 1.05rem; }
+
+  /* FASE 1: MATCHING */
+  #match-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 25px;
+  }
+  .match-card {
+    background: var(--card-bg);
+    border: 2px solid #334155;
+    border-radius: 8px;
+    padding: 18px 10px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+  }
+  .match-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .match-card.selected { border-color: var(--accent); background: rgba(0, 240, 255, 0.2); }
+  .match-card.matched { border-color: var(--success); background: rgba(57, 255, 20, 0.2); opacity: 0.45; pointer-events: none; }
+
+  button.btn {
+    background: var(--accent);
+    color: #041017;
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: 0.2s;
+  }
+  button.btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; box-shadow: none; }
+  button.btn:hover:not(:disabled) { transform: scale(1.04); box-shadow: 0 0 20px rgba(0, 240, 255, 0.6); }
+
+  /* FASE 2: CANVAS & HUD */
+  #game-container {
+    position: relative;
+    border: 2px solid #334155;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 35px rgba(0, 240, 255, 0.15);
+  }
+  canvas {
+    background: radial-gradient(circle at bottom, #161938 0%, #05060d 100%);
+    display: block;
+  }
+  #hud-top {
+    position: absolute;
+    top: 10px;
+    left: 15px;
+    right: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1rem;
+    pointer-events: none;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+  }
+  #level-badge {
+    background: rgba(0, 240, 255, 0.2);
+    border: 1px solid var(--accent);
+    padding: 4px 12px;
+    border-radius: 20px;
+    color: var(--accent);
+  }
+  #prompt-bar {
+    position: absolute;
+    top: 45px;
+    left: 15px;
+    right: 15px;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid #475569;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f8fafc;
+    pointer-events: none;
+  }
+  #progress-container {
+    position: absolute;
+    bottom: 8px;
+    left: 20px;
+    right: 20px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  #progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.3s ease;
+  }
+
+  /* MODALES SUPERPUESTOS */
+  .overlay-modal {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(8, 12, 20, 0.94);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+    box-sizing: border-box;
+  }
+  .revive-options { display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+  .revive-btn {
+    background: #1e293b;
+    border: 2px solid #475569;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-weight: 600;
+    transition: 0.2s;
+  }
+  .revive-btn:hover { border-color: var(--accent); background: #334155; }
+</style>
+</head>
+<body>
+
+  <!-- PANTALLA 1: MATCHING PREVIO -->
+  <div id="screen-match" class="screen active">
+    <h1>Misión: Centro Comercial</h1>
+    <p class="subtitle">Empareja el vocabulario clave para desbloquear los controles de tu nave.</p>
+    <div id="match-grid"></div>
+    <button id="start-btn" class="btn" disabled>Completa las parejas</button>
+  </div>
+
+  <!-- PANTALLA 2: SHOOTER -->
+  <div id="screen-game" class="screen">
+    <div id="game-container">
+      <div id="hud-top">
+        <span id="level-badge">NIVEL 1/3</span>
+        <span id="hud-score">PUNTOS: 0</span>
+        <span id="hud-shield" style="color: var(--success);">ESCUDO: 100%</span>
+      </div>
+      <div id="prompt-bar">Cargando objetivo...</div>
+      
+      <canvas id="canvas" width="800" height="520"></canvas>
+      
+      <div id="progress-container">
+        <div id="progress-fill"></div>
+      </div>
+
+      <!-- Modal Nivel Superado -->
+      <div id="level-modal" class="overlay-modal">
+        <h2 style="color: var(--success); font-size: 2.2rem; margin: 0;">¡SECTOR COMPLETADO!</h2>
+        <p id="level-msg" style="font-size: 1.2rem; color: #cbd5e1; margin: 15px 0 25px 0;"></p>
+        <button id="next-level-btn" class="btn">Continuar al siguiente nivel</button>
+      </div>
+
+      <!-- Modal de Rescate (Evita el game over definitivo) -->
+      <div id="revive-modal" class="overlay-modal">
+        <h2 style="color: var(--danger); font-size: 2rem; margin: 0;">¡ESCUDO CRÍTICO!</h2>
+        <p style="font-size: 1.1rem; color: #cbd5e1; margin: 10px 0;">Responde correctamente para reiniciar motores y recargar:</p>
+        <p id="revive-q" style="font-weight: 700; color: var(--accent); font-size: 1.3rem; margin: 10px 0;"></p>
+        <div class="revive-options" id="revive-opts"></div>
+      </div>
+
+      <!-- Modal Victoria Final -->
+      <div id="victory-modal" class="overlay-modal">
+        <h1 style="color: var(--warning); font-size: 2.5rem; margin: 0;">¡MISIÓN CUMPLIDA!</h1>
+        <p style="font-size: 1.2rem; color: #e2e8f0; margin: 15px 0 25px 0;">Has dominado todas las compras y expresiones de la tienda.</p>
+        <h3 id="final-stats" style="color: var(--accent); font-size: 1.6rem; margin-bottom: 25px;"></h3>
+        <button onclick="location.reload()" class="btn">Jugar otra vez</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ========================================================
+   BANCO DE DATOS EXTENSO Y POR NIVELES
+======================================================== */
+const VOCAB_MATCHING = [
+  { es: "Probarse", en: "To try on" },
+  { es: "La talla", en: "The size (clothes)" },
+  { es: "El probador", en: "Fitting room" },
+  { es: "Me queda bien", en: "It fits me well" },
+  { es: "Estrecho", en: "Tight" },
+  { es: "Las rebajas", en: "The sales" },
+  { es: "El tique", en: "The receipt" },
+  { es: "Pagar con tarjeta", en: "To pay by card" }
+];
+
+const GAME_LEVELS = [
+  {
+    levelName: "Nivel 1: Prendas y Calzado",
+    speed: 1.1,
+    questions: [
+      { prompt: '"Hoodie / Sweatshirt":', correct: "la sudadera", dist: ["la camisa", "la corbata"] },
+      { prompt: '"Jeans / Denim trousers":', correct: "los vaqueros", dist: ["los calcetines", "los guantes"] },
+      { prompt: '"Sneakers / Trainers":', correct: "las zapatillas", dist: ["las botas", "los zapatos de tacón"] },
+      { prompt: 'Lo llevas en invierno cuando hace frío:', correct: "el abrigo", dist: ["el bañador", "la camiseta"] },
+      { prompt: '"Socks":', correct: "los calcetines", dist: ["el cinturón", "la gorra"] },
+      { prompt: '"Leather jacket":', correct: "la cazadora", dist: ["la falda", "el pijama"] },
+      { prompt: 'Sujeta los pantalones a la cintura:', correct: "el cinturón", dist: ["el collar", "la bufanda"] }
+    ]
+  },
+  {
+    levelName: "Nivel 2: Tallas, Ajustes y la Tienda",
+    speed: 1.5,
+    questions: [
+      { prompt: '"It fits me too tight": Me queda demasiado...', correct: "estrecho", dist: ["ancho", "barato"] },
+      { prompt: '"Can I try this on?": ¿Me puedo...', correct: "probar esto?", dist: ["quitar esto?", "devolver esto?"] },
+      { prompt: 'Lugar donde te cambias para ver cómo te queda:', correct: "el probador", dist: ["el escaparate", "la caja"] },
+      { prompt: '"Do you have a bigger size?": ¿Tiene una talla más...', correct: "grande?", dist: ["larga?", "cara?"] },
+      { prompt: 'Lo contrario de "estrecho" o "apretado":', correct: "ancho", dist: ["corto", "oscuro"] },
+      { prompt: 'La persona que te atiende y te ayuda en la tienda:', correct: "el dependiente", dist: ["el cliente", "el cajero"] },
+      { prompt: '"These trousers fit me really well": Estos pantalones me quedan...', correct: "genial", dist: ["fatal", "antiguos"] }
+    ]
+  },
+  {
+    levelName: "Nivel 3: En la Caja, Precios y Devoluciones",
+    speed: 1.9,
+    questions: [
+      { prompt: 'El papel indispensable para cambiar o devolver una prenda:', correct: "el tique", dist: ["la carta", "el billete"] },
+      { prompt: '"How much does it cost?": ¿Cuánto...', correct: "cuesta?", dist: ["pesa?", "tarda?"] },
+      { prompt: 'Cuando algo tiene un precio muy bajo y buena calidad:', correct: "una ganga", dist: ["un timo", "un gasto"] },
+      { prompt: '"I would like to change this for another size": Quisiera...', correct: "cambiarlo", dist: ["tirarlo", "romperlo"] },
+      { prompt: '"Can I pay by card?": ¿Puedo pagar con...', correct: "tarjeta?", dist: ["efectivo?", "monedas?"] },
+      { prompt: 'Precios rebajados en enero y julio:', correct: "las rebajas", dist: ["los impuestos", "los alquileres"] },
+      { prompt: '"I want my money back": Quiero que me devuelvan el...', correct: "dinero", dist: ["producto", "bolso"] }
+    ]
+  }
+];
+
+const RESCUE_QUESTIONS = [
+  { q: "Si la camiseta es enana, necesitas una talla más...", a: "Grande", opts: ["Grande", "Pequeña"] },
+  { q: "¿Dónde pagas al salir de la tienda de ropa?", a: "En la caja", opts: ["En la caja", "En el probador"] },
+  { q: "Lo opuesto a 'caro' es...", a: "Barato", opts: ["Barato", "Moderno"] },
+  { q: "¿En qué época del año hay rebajas de verano?", a: "Julio", opts: ["Julio", "Diciembre"] }
+];
+
+/* ========================================================
+   FASE 1: MATCHING
+======================================================== */
+let selectedCards = [];
+let matchedCount = 0;
+
+function setupMatching() {
+  const grid = document.getElementById("match-grid");
+  grid.innerHTML = "";
+  
+  let cards = [];
+  VOCAB_MATCHING.forEach((item, idx) => {
+    cards.push({ text: item.es, id: idx });
+    cards.push({ text: item.en, id: idx });
+  });
+  cards.sort(() => Math.random() - 0.5);
+
+  cards.forEach(c => {
+    const el = document.createElement("div");
+    el.className = "match-card";
+    el.innerText = c.text;
+    el.dataset.id = c.id;
+    el.onclick = () => selectCard(el);
+    grid.appendChild(el);
+  });
+}
+
+function selectCard(el) {
+  if (selectedCards.length === 1 && selectedCards[0] === el) return;
+  el.classList.add("selected");
+  selectedCards.push(el);
+
+  if (selectedCards.length === 2) {
+    const [c1, c2] = selectedCards;
+    if (c1.dataset.id === c2.dataset.id) {
+      c1.classList.add("matched");
+      c2.classList.add("matched");
+      matchedCount++;
+      if (matchedCount === VOCAB_MATCHING.length) {
+        const btn = document.getElementById("start-btn");
+        btn.disabled = false;
+        btn.innerText = "¡Sistemas Listos: Despegar!";
+      }
+    } else {
+      setTimeout(() => {
+        c1.classList.remove("selected");
+        c2.classList.remove("selected");
+      }, 450);
+    }
+    selectedCards = [];
+  }
+}
+
+document.getElementById("start-btn").onclick = () => {
+  document.getElementById("screen-match").classList.remove("active");
+  document.getElementById("screen-game").classList.add("active");
+  initGame();
+};
+
+/* ========================================================
+   FASE 2: SHOOTER MOTOR CON NIVELES
+======================================================== */
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let currentLevelIdx = 0;
+let questionIndexInLevel = 0;
+let levelQuestions = [];
+let score = 0;
+let shield = 100;
+let isPaused = false;
+
+let player, bullets, enemies, stars;
+let keys = {};
+
+window.addEventListener("keydown", e => {
+  keys[e.code] = true;
+  if (e.code === "Space" && !isPaused) fireBullet();
+});
+window.addEventListener("keyup", e => keys[e.code] = false);
+
+function initGame() {
+  player = { x: canvas.width / 2 - 22, y: canvas.height - 50, w: 44, h: 26, speed: 6.5 };
+  bullets = [];
+  stars = Array.from({length: 45}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    speed: Math.random() * 2 + 0.5
+  }));
+  startLevel(0);
+  requestAnimationFrame(gameLoop);
+}
+
+function startLevel(lvlIdx) {
+  currentLevelIdx = lvlIdx;
+  questionIndexInLevel = 0;
+  // Mezclar preguntas del nivel
+  levelQuestions = [...GAME_LEVELS[currentLevelIdx].questions].sort(() => Math.random() - 0.5);
+  
+  document.getElementById("level-badge").innerText = `NIVEL ${currentLevelIdx + 1}/3`;
+  updateProgressBar();
+  loadQuestion();
+}
+
+function updateProgressBar() {
+  const percent = (questionIndexInLevel / levelQuestions.length) * 100;
+  document.getElementById("progress-fill").style.width = `${percent}%`;
+}
+
+function loadQuestion() {
+  if (questionIndexInLevel >= levelQuestions.length) {
+    handleLevelComplete();
+    return;
+  }
+
+  const q = levelQuestions[questionIndexInLevel];
+  document.getElementById("prompt-bar").innerText = q.prompt;
+
+  // Generar las 3 naves enemigas con suficiente separación
+  enemies = [];
+  let options = [
+    { text: q.correct, isCorrect: true },
+    { text: q.dist[0], isCorrect: false },
+    { text: q.dist[1], isCorrect: false }
+  ].sort(() => Math.random() - 0.5);
+
+  const lane = canvas.width / 3;
+  options.forEach((opt, i) => {
+    enemies.push({
+      x: i * lane + (lane / 2) - 70,
+      y: -40,
+      w: 140,
+      h: 36,
+      speed: GAME_LEVELS[currentLevelIdx].speed,
+      text: opt.text,
+      isCorrect: opt.isCorrect
+    });
+  });
+}
+
+function fireBullet() {
+  bullets.push({ x: player.x + player.w / 2 - 2, y: player.y, w: 4, h: 12, speed: 9 });
+}
+
+function handleLevelComplete() {
+  isPaused = true;
+  if (currentLevelIdx < GAME_LEVELS.length - 1) {
+    const modal = document.getElementById("level-modal");
+    document.getElementById("level-msg").innerText = `Completaste: ${GAME_LEVELS[currentLevelIdx].levelName}. ¡Prepárate para más velocidad!`;
+    document.getElementById("next-level-btn").onclick = () => {
+      modal.style.display = "none";
+      isPaused = false;
+      startLevel(currentLevelIdx + 1);
+    };
+    modal.style.display = "flex";
+  } else {
+    // Victoria absoluta
+    const vicModal = document.getElementById("victory-modal");
+    document.getElementById("final-stats").innerText = `Puntos Conseguidos: ${score}`;
+    vicModal.style.display = "flex";
+  }
+}
+
+function update() {
+  if (isPaused) return;
+
+  // Movimiento nave
+  if ((keys["ArrowLeft"] || keys["KeyA"]) && player.x > 0) player.x -= player.speed;
+  if ((keys["ArrowRight"] || keys["KeyD"]) && player.x < canvas.width - player.w) player.x += player.speed;
+
+  // Fondo estrellas
+  stars.forEach(s => {
+    s.y += s.speed;
+    if (s.y > canvas.height) s.y = 0;
+  });
+
+  // Balas
+  bullets.forEach((b, i) => {
+    b.y -= b.speed;
+    if (b.y < 0) bullets.splice(i, 1);
+  });
+
+  // Opciones descendentes
+  let advanceQuestion = false;
+  enemies.forEach((enemy, eIdx) => {
+    enemy.y += enemy.speed;
+
+    // Colisión bala con opción
+    bullets.forEach((b, bIdx) => {
+      if (b.x < enemy.x + enemy.w && b.x + b.w > enemy.x &&
+          b.y < enemy.y + enemy.h && b.y + b.h > enemy.y) {
+        
+        bullets.splice(bIdx, 1);
+        if (enemy.isCorrect) {
+          score += 150;
+          document.getElementById("hud-score").innerText = `PUNTOS: ${score}`;
+          questionIndexInLevel++;
+          updateProgressBar();
+          advanceQuestion = true;
+        } else {
+          damageShield(20);
+          enemies.splice(eIdx, 1); // Destruir solo la falsa disparada
+        }
+      }
+    });
+
+    // Si toca la parte inferior sin ser disparada
+    if (enemy.y > canvas.height - 40) {
+      if (enemy.isCorrect) damageShield(15);
+      advanceQuestion = true;
+    }
+  });
+
+  if (advanceQuestion) loadQuestion();
+}
+
+function damageShield(amt) {
+  shield = Math.max(0, shield - amt);
+  const shieldEl = document.getElementById("hud-shield");
+  shieldEl.innerText = `ESCUDO: ${shield}%`;
+  
+  if (shield <= 30) shieldEl.style.color = "var(--danger)";
+  else if (shield <= 60) shieldEl.style.color = "var(--warning)";
+  else shieldEl.style.color = "var(--success)";
+
+  if (shield === 0) triggerRevival();
+}
+
+function triggerRevival() {
+  isPaused = true;
+  const modal = document.getElementById("revive-modal");
+  const qObj = RESCUE_QUESTIONS[Math.floor(Math.random() * RESCUE_QUESTIONS.length)];
+  
+  document.getElementById("revive-q").innerText = qObj.q;
+  const optsContainer = document.getElementById("revive-opts");
+  optsContainer.innerHTML = "";
+
+  qObj.opts.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "revive-btn";
+    btn.innerText = opt;
+    btn.onclick = () => {
+      if (opt === qObj.a) {
+        shield = 60;
+        damageShield(0); // Para actualizar color
+        modal.style.display = "none";
+        isPaused = false;
+        loadQuestion();
+      } else {
+        btn.style.borderColor = "var(--danger)";
+      }
+    };
+    optsContainer.appendChild(btn);
+  });
+
+  modal.style.display = "flex";
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Estrellas
+  ctx.fillStyle = "#ffffff";
+  stars.forEach(s => ctx.fillRect(s.x, s.y, 2, 2));
+
+  // Nave Jugador
+  ctx.fillStyle = "#00f0ff";
+  ctx.beginPath();
+  ctx.moveTo(player.x + player.w / 2, player.y);
+  ctx.lineTo(player.x + player.w, player.y + player.h);
+  ctx.lineTo(player.x + player.w / 2, player.y + player.h - 6);
+  ctx.lineTo(player.x, player.y + player.h);
+  ctx.closePath();
+  ctx.fill();
+
+  // Balas
+  ctx.fillStyle = "#39ff14";
+  bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
+
+  // Naves de vocabulario
+  enemies.forEach(e => {
+    ctx.fillStyle = "#1e293b";
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 2;
+    ctx.fillRect(e.x, e.y, e.w, e.h);
+    ctx.strokeRect(e.x, e.y, e.w, e.h);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 13px 'Segoe UI', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(e.text, e.x + e.w / 2, e.y + e.h / 2 + 5);
+  });
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+setupMatching();
+</script>
+</body>
+</html>
