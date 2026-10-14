@@ -4,7 +4,7 @@ Original browser-local pixel platformer for TY Spanish, built in plain HTML, CSS
 
 ## Play
 
-GitHub Pages: https://languageprepie.github.io/Juegonaves/
+GitHub Pages: https://languageprepie.github.io/School-Escape/
 
 Controls: arrows / A D move, Space / W / Up jump (hold for a higher jump), E interact, H mission and English hint, P pause, R return to checkpoint. Mouse mode: click Walk to keep moving, Stop to stop, Jump and Talk. Falling or losing health returns to a checkpoint; there are no game-over screens. Three Spanish clues unlock each world's exit. The laboratory also needs the blue card. Sr. Martín requires a three-sentence original description before the final exit.
 
@@ -55,3 +55,11 @@ The connected GitHub tools do not provide a repository rename operation. In GitH
 ## Licence
 
 The School Escape source, original procedural canvas artwork and synthesised sounds are offered under the MIT licence in LICENSE. The archived previous game retains its prior provenance; it is not included in this new licence grant.
+
+## Update: staff bosses and detention
+
+Worlds are now 5,000 pixels wide (about 14% longer), with a new upper route before each exit. Sr. Martín, the tutor, the Year Head and the principal each guard one exit with three Spanish questions. All three must be correct in one attempt. A mistake displays an explanation and sends the player through a short, two-gap detention room, then returns them directly to the boss. Clues, books and Merits remain intact. The final description is still required in the Spanish classroom.
+
+Patrolling staff begin firing telegraphed MB balls from World 2, increasing in later worlds. Harmful staff, chemical puddles, flying homework and verb obstacles use red/magenta borders and warning symbols. Safe platforms retain neutral/blue/wood colours. Boss questions and detention visits are included in the locally generated Mission Report and recovery save.
+
+`tests/boss-ui.html` is an isolated browser QA fixture for exercising each real boss UI without repeating the whole adventure. It is not linked from the pupil game. The supplied school logo is not used, as requested.

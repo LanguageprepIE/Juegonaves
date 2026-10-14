@@ -20,3 +20,7 @@
 ## Scope
 
 The four worlds use a shared platform layout and compact original pixel drawings, with different scenery, characters, Spanish clues, a moving-platform laboratory and a comic Sr. Martín encounter. This is a functional classroom game rather than a production-scale commercial platformer. No automatic assessment of the quality of Spanish writing is claimed.
+
+## Staff boss update
+
+Regression harness passes all four boss question sequences, incorrect-answer detention, physical traversal of detention, return to the boss, preservation of Merits and clues, MB ball firing, expanded platform routes and boss-answer report evidence. `node --check` passes for both game scripts. Browser fixtures separately exercise the real staff-checkpoint UI; they do not constitute a full manual adventure playthrough.
