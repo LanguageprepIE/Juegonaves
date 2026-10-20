@@ -2,3 +2,15 @@
 .touch button.active{background:#77dfba;border-color:#339a80}.touch small{align-self:center;color:#b9cadd}
 
 .boss-option{display:block;width:100%;text-align:left;margin:10px 0!important;background:#dbe8df;border-color:#80aa99}.boss-count{font-weight:800;color:#446958}
+
+/* Mobile accessibility: keep the start action reachable inside the game viewport. */
+.overlay{display:flex;flex-direction:column;align-items:center;justify-content:safe center;overflow-y:auto;overscroll-behavior:contain;min-height:0;max-height:100%;padding:clamp(8px,2vw,30px)}
+.overlay h1{flex-shrink:0}.overlay p{flex-shrink:0}.overlay button{flex-shrink:0}
+@media(max-width:700px){
+ header{align-items:stretch}nav{flex-wrap:wrap;justify-content:center}nav button{font-size:14px}
+ .stage{overflow:visible}.overlay{position:relative;inset:auto;max-height:none;overflow:visible;border-radius:8px;padding:14px 10px}
+ .overlay:empty{display:none}.overlay h1{font-size:clamp(20px,6vw,30px);margin:6px}.overlay p{font-size:14px;line-height:1.4;margin:5px auto}
+ .overlay button{width:min(100%,320px);margin:8px auto;min-height:44px}
+ .touch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.touch small{grid-column:1/-1;text-align:center}.touch button{min-width:0;min-height:48px;padding:10px 6px}
+ dialog{max-height:calc(100dvh - 24px);overflow-y:auto;padding:14px}dialog button{max-width:100%;white-space:normal}
+}
